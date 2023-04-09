@@ -330,6 +330,8 @@ const Navbar = () => {
 export default Navbar;
 ```
 
+## Section 3: Auth UI
+
 ### 4.
 
 ### 5.
@@ -337,6 +339,20 @@ export default Navbar;
 ### 6.
 
 ### 7.
+
+## Section 4:
+
+## Section 5:
+
+## Section 6:
+
+## Section 7:
+
+## Section 8:
+
+## Section 9:
+
+## Section 10:
 
 ### 8.
 
