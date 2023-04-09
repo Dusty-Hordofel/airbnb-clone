@@ -66,10 +66,286 @@ module.exports = {
 };
 ```
 
-- Add the Tailwind directives to your CSS
+- Add global style in [globals.css](/styles/globals.css)
 
 ```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 ```
+
+## Section 2: Navbar UI
+
+### 3. Navbar
+
+- Update global style in [globals.css](/styles/globals.css)
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+:root {
+  height: 100%;
+}
+
+.leaflet-bottom,
+.leaflet-control,
+.leaflet-pane,
+.leaflet-top {
+  z-index: 0 !important;
+}
+
+.rdrMonth {
+  width: 100% !important;
+}
+
+.rdrCalendarWrapper {
+  font-size: 16px !important;
+  width: 100% !important;
+}
+```
+
+- install [react-icons](/https://react-icons.github.io/react-icons/)
+
+```bash
+$ npm i react-icons
+```
+
+- create [Avatar](/app/components/Avatar.tsx)
+  ![Avatar](./public/images/placeholder.jpg)
+
+```tsx
+"use client";
+
+import Image from "next/image";
+
+interface AvatarProps {
+  src: string | null | undefined;
+}
+
+const Avatar = ({ src }: AvatarProps) => {
+  return (
+    <Image
+      className="rounded-full"
+      height="30"
+      width="30"
+      alt="Avatar"
+      src={src || "/images/placeholder.jpg"}
+    />
+  );
+};
+
+export default Avatar;
+```
+
+- [Logo](/app/components/navbar/Logo.tsx)
+  ![Logo](./public/images/logo.png)
+
+```tsx
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
+const Logo = () => {
+  const router = useRouter();
+  return (
+    <Image
+      height="100"
+      width="100"
+      alt="logo"
+      className="hidden md:block cursor-pointer"
+      src="/images/logo.png"
+    />
+  );
+};
+
+export default Logo;
+```
+
+- create [Search](/app/components/navbar/Search.tsx)
+  ![Search](./public/images/search.png)
+
+```tsx
+"use client";
+
+import { BiSearch } from "react-icons/bi";
+
+const Search = () => {
+  return (
+    <div className="border-[1px] w-full md:w-auto py-2 rounded-full shadow-sm hover:shadow-sm transition cursor-pointer">
+      <div className="flex flex-row justify-between items-center">
+        <div className=" text-black text-sm font-semibold px-6">Anywhere</div>
+        <div className="hidden sm:block text-sm font-semibold px-6 border-x-[1px]  flex-1 flex-center">
+          Any Week
+        </div>
+        <div className="text-sm pl-6 pr-2 text-gray-600 flex flex-row items-center gap-3">
+          <div className="hidden sm:block">Add Guests</div>
+          <div
+            className="
+              p-2 
+              bg-rose-500 
+              rounded-full 
+              text-white
+            "
+          >
+            <BiSearch size={18} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Search;
+```
+
+- create [MenuItem](/app/components/navbar/UserMenu.tsx)
+  ![MenuItem](./public/images/menuItem.png)
+
+```tsx
+"use client";
+
+interface MenuItemProps {
+  onClick: () => void;
+  label: string;
+}
+
+const MenuItem = ({ onClick, label }: MenuItemProps) => {
+  return (
+    <div
+      onClick={onClick}
+      className="
+        px-4 
+        py-3 
+        hover:bg-neutral-100 
+        transition
+        font-semibold
+      "
+    >
+      {label}
+    </div>
+  );
+};
+
+export default MenuItem;
+```
+
+- [userMenu](/app/components/navbar/UserMenu.tsx)
+  ![userMenu](./public/images/userMenu.png)
+
+```tsx
+"use client";
+
+import { AiOutlineMenu } from "react-icons/ai";
+import Avatar from "../Avatar";
+import { useCallback, useState } from "react";
+import MenuItem from "./MenuItem";
+
+const UserMenu = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleOpen = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
+
+  return (
+    <div className="relative">
+      <div className="flex flex-row items-center gap-3">
+        <div
+          className="hidden md:block text-sm font-bold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer"
+          onClick={() => {}}
+        >
+          Airbnb your home
+        </div>
+        <div
+          className="p-4 transition md:py-1 flex flex-row items-center gap-3 rounded-full cursor-pointer hover:shadow-md md:px-2 border-[1px] border-neutral-200 "
+          onClick={toggleOpen}
+        >
+          <AiOutlineMenu />
+          <div className="hidden md:block">
+            <Avatar />
+          </div>
+        </div>
+      </div>
+      {isOpen && (
+        <div
+          className="
+           absolute 
+           rounded-xl 
+           shadow-md
+           w-[40vw]
+           md:w-3/4 
+           bg-white 
+           overflow-hidden 
+           right-0 
+           top-12 
+           text-sm
+         "
+        >
+          <div className="flex flex-col cursor-pointer">
+            <>
+              <MenuItem onClick={() => {}} label="Login" />
+              <MenuItem onClick={() => {}} label="Sign up" />
+            </>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UserMenu;
+```
+
+- create [Navbar](/app/components/navbar/Navbar.tsx)
+  ![Navbar](./public/images/navbar.png)
+
+```tsx
+"use client";
+import Container from "../Container";
+import Logo from "./Logo";
+import Search from "./Search";
+import UserMenu from "./UserMenu";
+
+const Navbar = () => {
+  return (
+    <div className="fixed bg-white z-10 shadow-sm w-full">
+      <div className="py-4 border-b-[1px]">
+        <Container>
+          <div className="flex gap:3 md:gap-0 flex-row justify-between items-center">
+            <Logo />
+            <Search />
+            <UserMenu />
+          </div>
+        </Container>
+      </div>
+    </div>
+  );
+};
+
+export default Navbar;
+```
+
+### 4.
+
+### 5.
+
+### 6.
+
+### 7.
+
+### 8.
+
+### 9.
+
+### 10.
+
+### 11.
+
+### 12.
+
+### 13.
