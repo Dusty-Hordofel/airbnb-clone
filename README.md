@@ -797,7 +797,57 @@ const Input = ({
 export default Input;
 ```
 
-### 7.
+### 7. Toast Providers
+
+- create [ToasterProvider](/app/providers/ToasterProvider.tsx) && [layout](/app/layout.tsx)
+
+```ts
+"use client";
+
+import { Toaster } from "react-hot-toast";
+
+const ToasterProvider = () => {
+  return <Toaster />;
+};
+
+export default ToasterProvider;
+```
+
+- create [ModalsProvider](/app/providers/ModalsProvider.tsx)
+
+```ts
+"use client";
+
+import RegisterModal from "../components/modals/RegisterModal";
+
+const ModalsProvider = () => {
+  return (
+    <>
+      <RegisterModal />
+    </>
+  );
+};
+
+export default ModalsProvider;
+```
+
+### 8.
+
+### 9.
+
+### 10.
+
+### 11.
+
+### 12.
+
+### 13.
+
+### 14.
+
+### 15.
+
+### 16.
 
 ## Section 4:
 
