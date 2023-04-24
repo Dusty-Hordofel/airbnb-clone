@@ -11,6 +11,7 @@ import axios from "axios";
 import Modal from "./modal";
 import Heading from "../Heading";
 import Input from "../inputs/Input";
+import Button from "../Button";
 
 const RegisterModal = () => {
   const registerModal = useRegisterModal();
@@ -76,6 +77,35 @@ const RegisterModal = () => {
       />
     </div>
   );
+  const footerContent = (
+    <div className="flex flex-col gap-4 mt-3">
+      <hr />
+      <Button
+        outline
+        label="Continue with Google"
+        icon={FcGoogle}
+        // onClick={() => signIn("google")}
+      />
+      <Button
+        outline
+        label="Continue with Github"
+        icon={AiFillGithub}
+        // onClick={() => signIn("github")}
+      />
+      <div className="mt-4 font-light text-center text-neutral-500">
+        <p>
+          Already have an account?
+          <span
+            // onClick={onToggle}
+            className="cursor-pointer text-neutral-800 hover:underline"
+          >
+            {" "}
+            Log in
+          </span>
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <Modal
@@ -86,6 +116,7 @@ const RegisterModal = () => {
       onClose={registerModal.onClose}
       onSubmit={handleSubmit(onSubmit)} //handleSubmit to wrap onSubmit function
       body={bodyContent}
+      footer={footerContent}
     />
   );
 };
