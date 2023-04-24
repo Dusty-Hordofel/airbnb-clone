@@ -880,7 +880,18 @@ const footerContent = (
 
 ## Section 4: : Register functionality, MongoDB, Prisma setup
 
-### 9.
+### 9. Install Prisma
+
+- install [Prisma](https://www.prisma.io/docs/getting-started/quickstart)
+
+```bash
+$ npm i -D prisma
+$ npx prisma init
+$ npm install next-auth @prisma/client @next-auth/prisma-adapter
+```
+
+- Prisma connect to mongoDB database
+  - fill [env](/.env)
 
 ### 10.
 
