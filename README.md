@@ -878,23 +878,233 @@ const footerContent = (
 );
 ```
 
-### 9.
+## Section 4: : Register functionality, MongoDB, Prisma setup
 
-### 10.
+### 9. Install Prisma
 
-### 11.
+- install [Prisma](https://www.prisma.io/docs/getting-started/quickstart)
 
-### 12.
+```bash
+$ npm i -D prisma
+$ npx prisma init
+$ npm install next-auth @prisma/client @next-auth/prisma-adapter
+$ npm i bcrypt
+$ npm i -D @types/bcrypt
+```
 
-### 13.
+- Prisma connect to mongoDB database
+  - fill [env](/.env)
+
+### 10. Create Prisma Schema
+
+- create [User-Post-Comment-Notification model](/prisma/schema.prisma)
+
+```js
+
+model User {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  hashedPassword  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  favoriteIds     String[] @db.ObjectId
+  accounts Account[]
+  listings Listing[]
+  reservations Reservation[]
+}
+
+model Account {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String   @db.ObjectId
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.String
+  access_token       String?  @db.String
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.String
+  session_state      String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)//we create a relation with the User using the userId fields in Account Model (userId String   @db.ObjectId...) and  reference to the User Model id fields (id String @id @default(auto())....)
+  @@unique([provider, providerAccountId])//
+}
+
+model Listing {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+  description String
+  imageSrc String
+  createdAt DateTime @default(now())
+  category  String
+  roomCount Int
+  bathroomCount Int
+  guestCount Int
+  locationValue String
+  userId String @db.ObjectId
+  price Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservations Reservation[]
+}
+
+model Reservation {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  listingId String @db.ObjectId
+  startDate DateTime
+  endDate DateTime
+  totalPrice Int
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+```
+
+![Message](./public/images/prisma.png)
+
+- push models in the MongoDB Data Base
+
+```bash
+$ npx prisma db push
+```
+
+### 11. Prisma Client db
+
+- create [prismadb](/app/libs/prismadb.ts)
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+//we do this because of Next.js hot reloading.It's means every time we change something in our code, Next.js will reload the server and we don't want to create a new PrismaClient every time we reload the server.
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
+const client = globalThis.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalThis.prisma = client;
+
+export default client;
+```
+
+### 12.[...nextauth] API
+
+- install if it's not already done
+
+```bash
+$ npm install bcrypt
+$ npm install -D @types/bcrypt
+$ npm i axios
+```
+
+- create [...nextauth](/pages/api/auth/[...nextauth].ts)
+
+```ts
+import bcrypt from "bcrypt";
+import NextAuth, { AuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GithubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
+import prisma from "@/app/libs/prismadb";
+
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GithubProvider({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+    //we need to pass the name of the provider and the credentials
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "email", type: "text" },
+        password: { label: "password", type: "password" },
+      },
+      //we need to implement the authorize method to verify if the credentials are valid
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Invalid credentials");
+        }
+        //we search for the user in the database
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        });
+
+        if (!user || !user?.hashedPassword) {
+          throw new Error("Invalid credentials");
+        }
+        //verify if the password is correct
+        const isCorrectPassword = await bcrypt.compare(
+          credentials.password,
+          user.hashedPassword
+        );
+        //if the password is not correct, we throw an error
+        if (!isCorrectPassword) {
+          throw new Error("Invalid credentials");
+        }
+        //if the password is correct, we return the user
+        return user;
+      },
+    }),
+  ],
+  pages: {
+    signIn: "/",
+  },
+  debug: process.env.NODE_ENV === "development", //debug mode only in development
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+export default NextAuth(authOptions);
+```
+
+### 13. Register API
+
+- create [register](/app/api/register)
+
+```ts
+import bcrypt from "bcrypt";
+import prisma from "@/app/libs/prismadb";
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const { email, name, password } = body;
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name,
+      hashedPassword,
+    },
+  });
+
+  return NextResponse.json(user);
+}
+```
+
+- test `register method using` `register form`
 
 ### 14.
 
 ### 15.
 
 ### 16.
-
-## Section 4:
 
 ## Section 5:
 
