@@ -553,7 +553,249 @@ const Button = ({
 export default Button;
 ```
 
-### 6.
+### 6. Register Modal
+
+- install zustand
+
+```bash
+$ npm i zustand
+$ npm i axios
+$ npm i react-hook-form
+$ npm i react-hot-toast
+```
+
+- create a [useRegisterModal](/app/hooks/useRegisterModal.tsx) && [RegisterModal](app/components/modals/RegisterModal.tsx)
+
+```ts
+import { create } from "zustand";
+
+interface registerModalStore {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}
+
+const useRegisterModal = create<registerModalStore>((set) => ({
+  isOpen: false,
+  onOpen: () => set({ isOpen: true }),
+  onClose: () => set({ isOpen: false }),
+}));
+
+export default useRegisterModal;
+```
+
+- create [RegisterModal](/app/components/modals/RegisterModal.tsx)
+
+```tsx
+"use client";
+
+import { AiFillGithub } from "react-icons/ai";
+// import { signIn } from "next-auth/react";
+import { FcGoogle } from "react-icons/fc";
+import { useCallback, useState } from "react";
+import useRegisterModal from "@/app/hooks/useRegisterModal";
+import { toast } from "react-hot-toast";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import axios from "axios";
+import Modal from "./modal";
+import Heading from "../Heading";
+import Input from "../inputs/Input";
+
+const RegisterModal = () => {
+  const registerModal = useRegisterModal();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FieldValues>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit: SubmitHandler<FieldValues> = useCallback((data) => {
+    setIsLoading(true);
+
+    axios
+      .post("/api/register", data)
+      .then(() => {
+        registerModal.onClose();
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []); //data is FieldValues, we send data to server and handle response error
+
+  const bodyContent = (
+    <div className="flex flex-col gap-4">
+      <Heading title="Welcome to Airbnb" subtitle="Create an account!" />
+      <Input
+        id="email"
+        label="Email"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+      <Input
+        id="name"
+        label="Name"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+      <Input
+        id="password"
+        label="Password"
+        type="password"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+    </div>
+  );
+
+  return (
+    <Modal
+      disabled={isLoading}
+      isOpen={registerModal.isOpen}
+      title="Register"
+      actionLabel="Continue"
+      onClose={registerModal.onClose}
+      onSubmit={handleSubmit(onSubmit)} //handleSubmit to wrap onSubmit function
+      body={bodyContent}
+    />
+  );
+};
+
+export default RegisterModal;
+```
+
+- add [onOpen](/) && [UserMenu](/app/components/navbar/UserMenu.tsx)
+
+```tsx
+<MenuItem onClick={registerModal.onOpen} label="Sign up" />
+```
+
+- create [Heading](/app/components/Heading.tsx)
+
+```tsx
+"use client";
+
+interface HeadingProps {
+  title: string;
+  subtitle?: string;
+  center?: boolean;
+}
+
+const Heading = ({ title, subtitle, center }: HeadingProps) => {
+  return (
+    <div className={center ? "text-center" : "text-start"}>
+      <div className="text-2xl font-bold">{title}</div>
+      <div className="font-light text-neutral-500 mt-2">{subtitle}</div>
+    </div>
+  );
+};
+
+export default Heading;
+```
+
+- create [Input](/app/components/inputs/Input.tsx)
+
+```tsx
+"use client";
+
+import { FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
+import { BiDollar } from "react-icons/bi";
+
+interface InputProps {
+  id: string;
+  label: string;
+  type?: string;
+  disabled?: boolean;
+  formatPrice?: boolean;
+  required?: boolean;
+  register: UseFormRegister<FieldValues>; //we need it's in our form
+  errors: FieldErrors;
+}
+
+const Input = ({
+  id,
+  label,
+  type = "text",
+  disabled,
+  formatPrice,
+  register,
+  required,
+  errors,
+}: InputProps) => {
+  return (
+    <div className="relative w-full">
+      {formatPrice && (
+        <BiDollar
+          size={24}
+          className="absolute text-neutral-700 top-5 left-2"
+        />
+      )}
+      <input
+        id={id}
+        disabled={disabled}
+        {...register(id, { required })}
+        placeholder=" "
+        type={type}
+        className={`
+          peer
+          w-full
+          p-4
+          pt-6 
+          font-light 
+          bg-white 
+          border-2
+          rounded-md
+          outline-none
+          transition
+          disabled:opacity-70
+          disabled:cursor-not-allowed
+          ${formatPrice ? "pl-9" : "pl-4"}
+          ${errors[id] ? "border-rose-500" : "border-neutral-300"}
+          ${errors[id] ? "focus:border-rose-500" : "focus:border-black"}
+        `}
+      />
+      <label
+        className={`
+          absolute 
+          text-md
+          duration-150 
+          transform 
+          -translate-y-3 
+          top-5 
+          z-10 
+          origin-[0] 
+          ${formatPrice ? "left-9" : "left-4"}
+          peer-placeholder-shown:scale-100 
+          peer-placeholder-shown:translate-y-0 
+          peer-focus:scale-75
+          peer-focus:-translate-y-4
+          ${errors[id] ? "text-rose-500" : "text-zinc-400"}
+        `}
+      >
+        {label}
+      </label>
+    </div>
+  );
+};
+
+export default Input;
+```
 
 ### 7.
 
@@ -582,3 +824,12 @@ export default Button;
 ### 12.
 
 ### 13.
+
+## External
+
+- [react-hook-form](https://www.npmjs.com/package/react-hook-form)
+- [axios](https://www.npmjs.com/package/axios)
+- [zustand](https://www.npmjs.com/package/zustand)
+- [react-hot-toast](https://www.npmjs.com/package/react-hot-toast)
+- []()
+- []()
