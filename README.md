@@ -330,13 +330,583 @@ const Navbar = () => {
 export default Navbar;
 ```
 
-### 4.
+## Section 3: Auth UI
 
-### 5.
+### 4. Prevent Navbar from Hydration
 
-### 6.
+- create [ClientOnly](/app/components/ClientOnly.tsx) && [layout](/app/layout.tsx) to prevent navbar from Hydration error.
 
-### 7.
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface clientOnlyProps {
+  children: React.ReactNode;
+}
+const ClientOnly = ({ children }: clientOnlyProps) => {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  if (!hasMounted) return null;
+  return <>{children}</>;
+};
+
+export default ClientOnly;
+```
+
+### 5. Modal
+
+- create [](app/components/modals/modal.tsx) && [layout](/app/layout.tsx)
+
+```tsx
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { IoMdClose } from "react-icons/io";
+
+import Button from "../Button";
+
+interface ModalProps {
+  isOpen?: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+  title?: string;
+  body?: React.ReactElement;
+  footer?: React.ReactElement;
+  actionLabel: string;
+  disabled?: boolean;
+  secondaryAction?: () => void;
+  secondaryActionLabel?: string;
+}
+
+const Modal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  title,
+  body,
+  actionLabel,
+  footer,
+  disabled,
+  secondaryAction,
+  secondaryActionLabel,
+}: ModalProps) => {
+  const [showModal, setShowModal] = useState(isOpen);
+
+  useEffect(() => {
+    setShowModal(isOpen);
+  }, [isOpen]);
+
+  const handleClose = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
+    setShowModal(false);
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  }, [onClose, disabled]);
+
+  const handleSubmit = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
+    onSubmit();
+  }, [onSubmit, disabled]);
+
+  const handleSecondaryAction = useCallback(() => {
+    if (disabled || !secondaryAction) {
+      return;
+    }
+
+    secondaryAction();
+  }, [secondaryAction, disabled]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none bg-neutral-800/70">
+        <div className="relative w-full h-full mx-auto my-6 md:w-4/6 lg:w-3/6 xl:w-2/5 lg:h-auto md:h-auto">
+          {/*content*/}
+          <div
+            className={`
+            translate
+            duration-300
+            h-full
+            ${showModal ? "translate-y-0" : "translate-y-full"}
+            ${showModal ? "opacity-100" : "opacity-0"}
+          `}
+          >
+            <div className="relative flex flex-col w-full h-full bg-white border-0 rounded-lg shadow-lg outline-none translate lg:h-auto md:h-auto focus:outline-none">
+              {/*header*/}
+              <div
+                className="
+                flex 
+                items-center 
+                p-6
+                rounded-t
+                justify-center
+                relative
+                border-b-[1px]
+                "
+              >
+                <button
+                  className="absolute p-1 transition border-0 hover:opacity-70 left-9"
+                  onClick={handleClose}
+                >
+                  <IoMdClose size={18} />
+                </button>
+                <div className="text-lg font-semibold">{title}</div>
+              </div>
+              {/*body*/}
+              <div className="relative flex-auto p-6">{body}</div>
+              {/*footer*/}
+              <div className="flex flex-col gap-2 p-6">
+                <div className="flex flex-row items-center w-full gap-4 ">
+                  {secondaryAction && secondaryActionLabel && (
+                    <Button
+                      disabled={disabled}
+                      label={secondaryActionLabel}
+                      onClick={handleSecondaryAction}
+                      outline
+                    />
+                  )}
+                  <Button
+                    disabled={disabled}
+                    label={actionLabel}
+                    onClick={handleSubmit}
+                  />
+                </div>
+                {footer}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Modal;
+```
+
+- create [Button](/app/components/Button.tsx)
+
+```tsx
+"use client";
+
+import { IconType } from "react-icons";
+
+interface ButtonProps {
+  label: string;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  outline?: boolean;
+  small?: boolean;
+  icon?: IconType;
+}
+
+const Button = ({
+  label,
+  onClick,
+  disabled,
+  outline,
+  small,
+  icon: Icon,
+}: ButtonProps) => {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={`
+        relative
+        disabled:opacity-70
+        disabled:cursor-not-allowed
+        rounded-lg
+        hover:opacity-80
+        transition
+        w-full
+        ${outline ? "bg-white" : "bg-rose-500"}
+        ${outline ? "border-black" : "border-rose-500"}
+        ${outline ? "text-black" : "text-white"}
+        ${small ? "text-sm" : "text-md"}
+        ${small ? "py-1" : "py-3"}
+        ${small ? "font-light" : "font-semibold"}
+        ${small ? "border-[1px]" : "border-2"}
+      `}
+    >
+      {Icon && <Icon size={24} className="absolute  left-4 top-3" />}
+      {label}
+    </button>
+  );
+};
+
+export default Button;
+```
+
+### 6. Register Modal
+
+- install zustand
+
+```bash
+$ npm i zustand
+$ npm i axios
+$ npm i react-hook-form
+$ npm i react-hot-toast
+```
+
+- create a [useRegisterModal](/app/hooks/useRegisterModal.tsx) && [RegisterModal](app/components/modals/RegisterModal.tsx)
+
+```ts
+import { create } from "zustand";
+
+interface registerModalStore {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}
+
+const useRegisterModal = create<registerModalStore>((set) => ({
+  isOpen: false,
+  onOpen: () => set({ isOpen: true }),
+  onClose: () => set({ isOpen: false }),
+}));
+
+export default useRegisterModal;
+```
+
+- create [RegisterModal](/app/components/modals/RegisterModal.tsx)
+
+```tsx
+"use client";
+
+import { AiFillGithub } from "react-icons/ai";
+// import { signIn } from "next-auth/react";
+import { FcGoogle } from "react-icons/fc";
+import { useCallback, useState } from "react";
+import useRegisterModal from "@/app/hooks/useRegisterModal";
+import { toast } from "react-hot-toast";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import axios from "axios";
+import Modal from "./modal";
+import Heading from "../Heading";
+import Input from "../inputs/Input";
+
+const RegisterModal = () => {
+  const registerModal = useRegisterModal();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FieldValues>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit: SubmitHandler<FieldValues> = useCallback((data) => {
+    setIsLoading(true);
+
+    axios
+      .post("/api/register", data)
+      .then(() => {
+        registerModal.onClose();
+      })
+      .catch((error) => {
+        console.log(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []); //data is FieldValues, we send data to server and handle response error
+
+  const bodyContent = (
+    <div className="flex flex-col gap-4">
+      <Heading title="Welcome to Airbnb" subtitle="Create an account!" />
+      <Input
+        id="email"
+        label="Email"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+      <Input
+        id="name"
+        label="Name"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+      <Input
+        id="password"
+        label="Password"
+        type="password"
+        disabled={isLoading}
+        register={register}
+        errors={errors}
+        required
+      />
+    </div>
+  );
+
+  return (
+    <Modal
+      disabled={isLoading}
+      isOpen={registerModal.isOpen}
+      title="Register"
+      actionLabel="Continue"
+      onClose={registerModal.onClose}
+      onSubmit={handleSubmit(onSubmit)} //handleSubmit to wrap onSubmit function
+      body={bodyContent}
+    />
+  );
+};
+
+export default RegisterModal;
+```
+
+- add [onOpen](/) && [UserMenu](/app/components/navbar/UserMenu.tsx)
+
+```tsx
+<MenuItem onClick={registerModal.onOpen} label="Sign up" />
+```
+
+- create [Heading](/app/components/Heading.tsx)
+
+```tsx
+"use client";
+
+interface HeadingProps {
+  title: string;
+  subtitle?: string;
+  center?: boolean;
+}
+
+const Heading = ({ title, subtitle, center }: HeadingProps) => {
+  return (
+    <div className={center ? "text-center" : "text-start"}>
+      <div className="text-2xl font-bold">{title}</div>
+      <div className="font-light text-neutral-500 mt-2">{subtitle}</div>
+    </div>
+  );
+};
+
+export default Heading;
+```
+
+- create [Input](/app/components/inputs/Input.tsx)
+
+```tsx
+"use client";
+
+import { FieldErrors, FieldValues, UseFormRegister } from "react-hook-form";
+import { BiDollar } from "react-icons/bi";
+
+interface InputProps {
+  id: string;
+  label: string;
+  type?: string;
+  disabled?: boolean;
+  formatPrice?: boolean;
+  required?: boolean;
+  register: UseFormRegister<FieldValues>; //we need it's in our form
+  errors: FieldErrors;
+}
+
+const Input = ({
+  id,
+  label,
+  type = "text",
+  disabled,
+  formatPrice,
+  register,
+  required,
+  errors,
+}: InputProps) => {
+  return (
+    <div className="relative w-full">
+      {formatPrice && (
+        <BiDollar
+          size={24}
+          className="absolute text-neutral-700 top-5 left-2"
+        />
+      )}
+      <input
+        id={id}
+        disabled={disabled}
+        {...register(id, { required })}
+        placeholder=" "
+        type={type}
+        className={`
+          peer
+          w-full
+          p-4
+          pt-6 
+          font-light 
+          bg-white 
+          border-2
+          rounded-md
+          outline-none
+          transition
+          disabled:opacity-70
+          disabled:cursor-not-allowed
+          ${formatPrice ? "pl-9" : "pl-4"}
+          ${errors[id] ? "border-rose-500" : "border-neutral-300"}
+          ${errors[id] ? "focus:border-rose-500" : "focus:border-black"}
+        `}
+      />
+      <label
+        className={`
+          absolute 
+          text-md
+          duration-150 
+          transform 
+          -translate-y-3 
+          top-5 
+          z-10 
+          origin-[0] 
+          ${formatPrice ? "left-9" : "left-4"}
+          peer-placeholder-shown:scale-100 
+          peer-placeholder-shown:translate-y-0 
+          peer-focus:scale-75
+          peer-focus:-translate-y-4
+          ${errors[id] ? "text-rose-500" : "text-zinc-400"}
+        `}
+      >
+        {label}
+      </label>
+    </div>
+  );
+};
+
+export default Input;
+```
+
+### 7. Toast Providers
+
+- create [ToasterProvider](/app/providers/ToasterProvider.tsx) && [layout](/app/layout.tsx)
+
+```ts
+"use client";
+
+import { Toaster } from "react-hot-toast";
+
+const ToasterProvider = () => {
+  return <Toaster />;
+};
+
+export default ToasterProvider;
+```
+
+- create [ModalsProvider](/app/providers/ModalsProvider.tsx)
+
+```ts
+"use client";
+
+import RegisterModal from "../components/modals/RegisterModal";
+
+const ModalsProvider = () => {
+  return (
+    <>
+      <RegisterModal />
+    </>
+  );
+};
+
+export default ModalsProvider;
+```
+
+### 8. Footer Content
+
+- create [FooterContent](/app/components/modals/RegisterModal.tsx) && [Modal](/app/components/modals/Modal.tsx)
+
+```ts
+const footerContent = (
+  <div className="flex flex-col gap-4 mt-3">
+    <hr />
+    <Button
+      outline
+      label="Continue with Google"
+      icon={FcGoogle}
+      onClick={() => signIn("google")}
+    />
+    <Button
+      outline
+      label="Continue with Github"
+      icon={AiFillGithub}
+      onClick={() => signIn("github")}
+    />
+    <div
+      className="
+          text-neutral-500 
+          text-center 
+          mt-4 
+          font-light
+        "
+    >
+      <p>
+        Already have an account?
+        <span
+          onClick={onToggle}
+          className="
+              text-neutral-800
+              cursor-pointer 
+              hover:underline
+            "
+        >
+          {" "}
+          Log in
+        </span>
+      </p>
+    </div>
+  </div>
+);
+```
+
+### 9.
+
+### 10.
+
+### 11.
+
+### 12.
+
+### 13.
+
+### 14.
+
+### 15.
+
+### 16.
+
+## Section 4:
+
+## Section 5:
+
+## Section 6:
+
+## Section 7:
+
+## Section 8:
+
+## Section 9:
+
+## Section 10:
 
 ### 8.
 
@@ -349,3 +919,12 @@ export default Navbar;
 ### 12.
 
 ### 13.
+
+## External
+
+- [react-hook-form](https://www.npmjs.com/package/react-hook-form)
+- [axios](https://www.npmjs.com/package/axios)
+- [zustand](https://www.npmjs.com/package/zustand)
+- [react-hot-toast](https://www.npmjs.com/package/react-hot-toast)
+- []()
+- []()
