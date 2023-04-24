@@ -102,9 +102,9 @@ const Modal = ({
                 </button>
                 <div className="text-lg font-semibold">{title}</div>
               </div>
-              {/*body*/}
+              {/*Body*/}
               <div className="relative flex-auto p-6">{body}</div>
-              {/*footer*/}
+              {/*Footer*/}
               <div className="flex flex-col gap-2 p-6">
                 <div className="flex flex-row items-center w-full gap-4 ">
                   {secondaryAction && secondaryActionLabel && (
