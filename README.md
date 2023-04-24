@@ -878,6 +878,8 @@ const footerContent = (
 );
 ```
 
+## Section 4: : Register functionality, MongoDB, Prisma setup
+
 ### 9.
 
 ### 10.
@@ -893,8 +895,6 @@ const footerContent = (
 ### 15.
 
 ### 16.
-
-## Section 4:
 
 ## Section 5:
 
