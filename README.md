@@ -332,7 +332,31 @@ export default Navbar;
 
 ## Section 3: Auth UI
 
-### 4.
+### 4. Prevent Navbar from Hydration
+
+- create [ClientOnly](/app/components/ClientOnly.tsx) && [layout](/app/layout.tsx) to prevent navbar from Hydration error.
+
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface clientOnlyProps {
+  children: React.ReactNode;
+}
+const ClientOnly = ({ children }: clientOnlyProps) => {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  });
+
+  if (!hasMounted) return null;
+  return <>{children}</>;
+};
+
+export default ClientOnly;
+```
 
 ### 5.
 
